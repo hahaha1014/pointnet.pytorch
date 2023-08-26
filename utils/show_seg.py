@@ -6,6 +6,8 @@ import torch
 import torch.nn.parallel
 import torch.utils.data
 from torch.autograd import Variable
+import sys
+sys.path.append("../")
 from pointnet.dataset import ShapeNetDataset
 from pointnet.model import PointNetDenseCls
 import matplotlib.pyplot as plt

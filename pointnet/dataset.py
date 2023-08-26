@@ -10,7 +10,7 @@ import json
 from plyfile import PlyData, PlyElement
 
 def get_segmentation_classes(root):
-    catfile = os.path.join(root, 'synsetoffset2category.txt')
+    catfile = os.path.join(root, 'synsetoffset2category.txt') # 类别和文件夹名字对应的路径
     cat = {}
     meta = {}
 
