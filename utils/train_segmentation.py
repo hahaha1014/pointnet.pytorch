@@ -19,6 +19,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument(
     '--batchSize', type=int, default=32, help='input batch size')
 parser.add_argument(
+    '--num_points', type=int, default=2500, help='input num points')
+parser.add_argument(
     '--workers', type=int, help='number of data loading workers', default=4)
 parser.add_argument(
     '--nepoch', type=int, default=25, help='number of epochs to train for')
@@ -39,6 +41,7 @@ torch.manual_seed(opt.manualSeed)
 dataset = ShapeNetDataset(
     root=opt.dataset,
     classification=False,
+    npoints=opt.num_points,
     class_choice=[opt.class_choice])
 dataloader = torch.utils.data.DataLoader(
     dataset,
@@ -51,6 +54,7 @@ test_dataset = ShapeNetDataset(
     classification=False,
     class_choice=[opt.class_choice],
     split='test',
+    npoints=opt.num_points,
     data_augmentation=False)
 testdataloader = torch.utils.data.DataLoader(
     test_dataset,
@@ -98,7 +102,7 @@ for epoch in range(opt.nepoch):
         optimizer.step()
         pred_choice = pred.data.max(1)[1]
         correct = pred_choice.eq(target.data).cpu().sum()
-        print('[%d: %d/%d] train loss: %f accuracy: %f' % (epoch, i, num_batch, loss.item(), correct.item()/float(opt.batchSize * 2500)))
+        print('[%d: %d/%d] train loss: %f accuracy: %f' % (epoch, i, num_batch, loss.item(), correct.item()/float(opt.batchSize * opt.num_points)))
 
         if i % 10 == 0:
             j, data = next(enumerate(testdataloader, 0))
@@ -112,7 +116,7 @@ for epoch in range(opt.nepoch):
             loss = F.nll_loss(pred, target)
             pred_choice = pred.data.max(1)[1]
             correct = pred_choice.eq(target.data).cpu().sum()
-            print('[%d: %d/%d] %s loss: %f accuracy: %f' % (epoch, i, num_batch, blue('test'), loss.item(), correct.item()/float(opt.batchSize * 2500)))
+            print('[%d: %d/%d] %s loss: %f accuracy: %f' % (epoch, i, num_batch, blue('test'), loss.item(), correct.item()/float(opt.batchSize * opt.num_points)))
 
     torch.save(classifier.state_dict(), '%s/seg_model_%s_%d.pth' % (opt.outf, opt.class_choice, epoch))
 

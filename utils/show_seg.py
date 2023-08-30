@@ -21,6 +21,7 @@ parser.add_argument('--model', type=str, default='', help='model path')
 parser.add_argument('--idx', type=int, default=0, help='model index')
 parser.add_argument('--dataset', type=str, default='', help='dataset path')
 parser.add_argument('--class_choice', type=str, default='', help='class choice')
+parser.add_argument('--num_points', type=int, default=2500, help='input num points')
 
 opt = parser.parse_args()
 print(opt)
@@ -29,6 +30,7 @@ d = ShapeNetDataset(
     root=opt.dataset,
     class_choice=[opt.class_choice],
     split='test',
+    npoints=opt.num_points,
     data_augmentation=False)
 
 idx = opt.idx
