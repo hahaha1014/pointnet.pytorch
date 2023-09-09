@@ -23,7 +23,8 @@ opt = parser.parse_args()
 print(opt)
 
 test_dataset = ShapeNetDataset(
-    root='../shapenetcore_partanno_segmentation_benchmark_v0',
+    #root='../shapenetcore_partanno_segmentation_benchmark_v0',
+    root='../sonar_data',
     split='test',
     classification=True,
     npoints=opt.num_points,
