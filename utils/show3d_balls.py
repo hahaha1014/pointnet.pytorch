@@ -23,10 +23,12 @@ dll = np.ctypeslib.load_library('render_balls_so', '.')
 
 def showpoints(xyz,c_gt=None, c_pred = None, waittime=0, 
     showrot=False, magnifyBlue=0, freezerot=False, background=(0,0,0), 
-    normalizecolor=True, ballradius=10):
+    normalizecolor=True, ballradius=2):
+
     global showsz, mousex, mousey, zoom, changed
+
     xyz=xyz-xyz.mean(axis=0)
-    radius=((xyz**2).sum(axis=-1)**0.5).max()
+    radius=((xyz**2).sum(axis=-1)).max()
     xyz/=(radius*2.2)/showsz
     if c_gt is None:
         c0 = np.zeros((len(xyz), ), dtype='float32') + 255
@@ -37,6 +39,9 @@ def showpoints(xyz,c_gt=None, c_pred = None, waittime=0,
         c1 = c_gt[:, 1]
         c2 = c_gt[:, 2]
 
+    c0 = c0.astype(np.float32)
+    c1 = c1.astype(np.float32)
+    c2 = c2.astype(np.float32)
 
     if normalizecolor:
         c0 /= (c0.max() + 1e-14) / 255.0
@@ -123,6 +128,10 @@ def showpoints(xyz,c_gt=None, c_pred = None, waittime=0,
                     c1 = np.zeros((len(xyz), ), dtype='float32') + 255
                     c2 = np.zeros((len(xyz), ), dtype='float32') + 255
                 else:
+                    c0 = c0.astype(np.float32)
+                    c1 = c1.astype(np.float32)
+                    c2 = c2.astype(np.float32)
+
                     c0 = c_gt[:, 0]
                     c1 = c_gt[:, 1]
                     c2 = c_gt[:, 2]
@@ -132,10 +141,17 @@ def showpoints(xyz,c_gt=None, c_pred = None, waittime=0,
                     c1 = np.zeros((len(xyz), ), dtype='float32') + 255
                     c2 = np.zeros((len(xyz), ), dtype='float32') + 255
                 else:
+                    c0 = c0.astype(np.float32)
+                    c1 = c1.astype(np.float32)
+                    c2 = c2.astype(np.float32)
+
                     c0 = c_pred[:, 0]
                     c1 = c_pred[:, 1]
                     c2 = c_pred[:, 2]
             if normalizecolor:
+                c0 = c0.astype(np.float32)
+                c1 = c1.astype(np.float32)
+                c2 = c2.astype(np.float32)
                 c0 /= (c0.max() + 1e-14) / 255.0
                 c1 /= (c1.max() + 1e-14) / 255.0
                 c2 /= (c2.max() + 1e-14) / 255.0

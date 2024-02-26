@@ -8,10 +8,10 @@ import sys
 from tqdm import tqdm 
 import json
 from plyfile import PlyData, PlyElement
-#from pointnet.fps import farthest_point_sample
+from pointnet.fps import farthest_point_sample
 
 def get_segmentation_classes(root):
-    catfile = os.path.join(root, 'synsetoffset2category.txt') # 类别和文件夹名字对应的路径
+    catfile = os.path.join(root, 'synsetoffset2category.txt')
     cat = {}
     meta = {}
 
@@ -116,9 +116,9 @@ class ShapeNetDataset(data.Dataset):
 
         choice = np.random.choice(len(seg), self.npoints, replace=True)
 
-        #xyz = torch.from_numpy(np.expand_dims(point_set,axis=0))
-        #res = farthest_point_sample(xyz,self.npoints)
-        #choice = res[0].tolist()
+        # xyz = torch.from_numpy(np.expand_dims(point_set,axis=0))
+        # res = farthest_point_sample(xyz,self.npoints)
+        # choice = res[0].tolist()
 
         #resample
         point_set = point_set[choice, :]

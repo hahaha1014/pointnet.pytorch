@@ -3,7 +3,7 @@ Bag	2
 Box 1
 Wall 2
 Man 2
-Scene 3
+Scene 8
 Cap	2
 Car	4
 Chair	4
