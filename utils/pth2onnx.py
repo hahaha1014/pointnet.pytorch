@@ -42,7 +42,7 @@ def pth_to_onnx(input, checkpoint, onnx_path, input_names=['input'], output_name
               please give a name that ends with \'.onnx\'!')
         return 0
 
-    model = build_pointnet(num_classes = 4, feature_transform = False, phase = 'test')    # 导入模型
+    model = build_pointnet(num_classes = 8, feature_transform = False, phase = 'test')    # 导入模型
     # model.load_state_dict(torch.load(checkpoint))  # 初始化权重
     model.eval()
     # model.to(device)

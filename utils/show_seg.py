@@ -19,7 +19,7 @@ import time
 parser = argparse.ArgumentParser()
 
 parser.add_argument('--model', type=str, default='', help='model path')
-parser.add_argument('--idx', type=int, default=0, help='model index')
+parser.add_argument('--idx', type=int, defaFult=0, help='model index')
 parser.add_argument('--dataset', type=str, default='', help='dataset path')
 parser.add_argument('--class_choice', type=str, default='', help='class choice')
 parser.add_argument('--num_points', type=int, default=4096, help='input num points')

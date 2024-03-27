@@ -18,7 +18,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument(
     '--batchSize', type=int, default=16, help='input batch size')
 parser.add_argument(
-    '--num_points', type=int, default=4096, help='input num points')
+    '--num_points', type=int, default=2048, help='input num points')
 parser.add_argument(
     '--workers', type=int, help='number of data loading workers', default=4)
 parser.add_argument(
@@ -85,6 +85,7 @@ classifier.cuda()
 
 num_batch = len(dataset) / opt.batchSize
 
+all_oa = 0
 
 for epoch in range(opt.nepoch):
     scheduler.step()
@@ -123,6 +124,7 @@ for epoch in range(opt.nepoch):
             print('[%d: %d/%d] %s loss: %f accuracy: %f' % (epoch, i, num_batch, blue('test'), loss.item(), correct.item()/float(opt.batchSize * opt.num_points)))
 
     torch.save(classifier.state_dict(), '%s/seg_model_%s_%d.pth' % (opt.outf, opt.class_choice, epoch))
+    print("save model")
 
 ## benchmark mIOU
 shape_ious = []
@@ -155,7 +157,6 @@ for i,data in tqdm(enumerate(testdataloader, 0)):
                 iou = I / float(U)
             part_ious.append(iou)
         shape_ious.append(np.mean(part_ious))
-
 
 print("mIOU for class {}: {}".format(opt.class_choice, np.mean(shape_ious)))
 print("oAcc for class {}: {}".format(opt.class_choice, np.mean(all_acc)))

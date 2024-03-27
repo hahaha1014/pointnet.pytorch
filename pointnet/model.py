@@ -13,6 +13,9 @@ from pointnet.senet import SELayer
 from pointnet.SPPLayer import SPPLayer
 from thop import profile
 
+from torchstat import stat
+import torchvision.models as models
+
 
 class STN3d(nn.Module):
     def __init__(self):
@@ -90,59 +93,6 @@ class STNkd(nn.Module):
         x = x.view(-1, self.k, self.k)
         return x
 
-# #time sequential
-# class PointNetfeat(nn.Module):
-#     def __init__(self, global_feat = True, feature_transform = False):
-#         super(PointNetfeat, self).__init__()
-#         self.stn = STN3d()
-#         self.conv1 = torch.nn.Conv1d(3, 64, 1)
-#         self.conv2 = torch.nn.Conv1d(64, 128, 1)
-#         self.conv3 = torch.nn.Conv1d(128, 1024, 1)
-#         self.bn1 = nn.BatchNorm1d(64)
-#         self.bn2 = nn.BatchNorm1d(128)
-#         self.bn3 = nn.BatchNorm1d(1024)
-#         self.global_feat = global_feat
-#         self.feature_transform = feature_transform
-#         if self.feature_transform:
-#             self.fstn = STNkd(k=64)
-#         self.fuse_module = nn.Linear(128, 64)
-
-#     def forward(self, x, last_frame_feat):
-#         n_pts = x.size()[2] # b 3 n
-#         trans = self.stn(x)
-#         x = x.transpose(2, 1)
-#         x = torch.bmm(x, trans)
-#         x = x.transpose(2, 1) # b 3 n
-#         x = F.relu(self.bn1(self.conv1(x))) # b 64 n
-
-#         if self.feature_transform:
-#             trans_feat = self.fstn(x)
-#             x = x.transpose(2,1)
-#             x = torch.bmm(x, trans_feat)
-#             x = x.transpose(2,1)
-#         else:
-#             trans_feat = None
-
-#         # 上下两帧的融合
-#         last_frame_feat = last_frame_feat.to(x.device)
-#         x = torch.cat([x, last_frame_feat], dim=1) # b 128 n
-#         x = x.transpose(1, 2)
-#         x = self.fuse_module(x)
-#         x = x.transpose(1, 2)
-#         last_frame_feat = x.detach()
-
-#         pointfeat = x
-#         x = F.relu(self.bn2(self.conv2(x)))
-#         x = self.bn3(self.conv3(x))
-
-#         x = torch.max(x, 2, keepdim=True)[0]
-#         x = x.view(-1, 1024)
-#         if self.global_feat:
-#             return x, trans, trans_feat
-#         else:
-#             x = x.view(-1, 1024, 1).repeat(1, 1, n_pts)
-#             return torch.cat([x, pointfeat], 1), trans, trans_feat, last_frame_feat
-
 class PointNetfeat(nn.Module):
     def __init__(self, global_feat = True, feature_transform = False):
         super(PointNetfeat, self).__init__()
@@ -192,13 +142,14 @@ class PointNetfeat(nn.Module):
 
         # senet test, in:B, Channels, n, w=1
         # x = x.unsqueeze(3)
-        # print("senet")
+        # # print("senet")
         # x = self.selayer(x)
         # x = x.squeeze(3)
         
         pointfeat = x
         x = F.relu(self.bn2(self.conv2(x)))
         x = self.bn3(self.conv3(x))
+
         # 1.最大池化
         x = torch.max(x, 2, keepdim=True)[0]
         # 2.混合平均池化和最大池化
@@ -209,17 +160,9 @@ class PointNetfeat(nn.Module):
         # 3.金字塔池化
         # x = self.spplayer(x)
         # x = self.linear(x)
-        # print("spplayer")
+        # # print("spplayer")
 
         # x = x.view(-1, 1024)
-
-        # x = x.squeeze(0)
-        # embed = nn.Embedding.from_pretrained(x, freeze=False) # ~B 1 1024
-        # idx = torch.LongTensor([[0]]).to(x.device)
-        # x_embed = embed(idx)
-        # out, hidden = self.gru(x_embed)
-        # print("***********",hidden.size())
-        # x = hidden.unsqueeze(0)
 
         if self.global_feat:
             return x, trans, trans_feat
@@ -246,38 +189,6 @@ class PointNetCls(nn.Module):
         x = F.relu(self.bn2(self.dropout(self.fc2(x))))
         x = self.fc3(x)
         return F.log_softmax(x, dim=1), trans, trans_feat
-
-# #time sequential
-# class PointNetDenseCls(nn.Module):
-#     def __init__(self, k = 2, feature_transform=False):
-#         super(PointNetDenseCls, self).__init__()
-#         self.k = k
-#         self.feature_transform=feature_transform
-#         self.feat = PointNetfeat(global_feat=False, feature_transform=feature_transform)
-#         self.conv1 = torch.nn.Conv1d(1088, 512, 1)
-#         #self.conv1 = torch.nn.Conv1d(1152, 512, 1)
-#         self.conv2 = torch.nn.Conv1d(512, 256, 1)
-#         self.conv3 = torch.nn.Conv1d(256, 128, 1)
-#         self.conv4 = torch.nn.Conv1d(128, self.k, 1)
-#         self.bn1 = nn.BatchNorm1d(512)
-#         self.bn2 = nn.BatchNorm1d(256)
-#         self.bn3 = nn.BatchNorm1d(128)
-
-#         # self.last_frame_feat = None
-
-#     def forward(self, x, last_frame_feat):
-#         batchsize = x.size()[0]
-#         n_pts = x.size()[2]
-#         x, trans, trans_feat, last_frame_feat = self.feat(x, last_frame_feat)
-#         x = F.relu(self.bn1(self.conv1(x)))
-#         x = F.relu(self.bn2(self.conv2(x)))
-#         x = F.relu(self.bn3(self.conv3(x)))
-#         x = self.conv4(x)
-#         x = x.transpose(2,1).contiguous()
-#         x = F.log_softmax(x.view(-1,self.k), dim=-1)
-#         x = x.view(batchsize, n_pts, self.k)
-#         return x, trans, trans_feat, last_frame_feat
-#         return x
 
 class PointNetDenseCls(nn.Module):
     def __init__(self, k = 8, feature_transform=False):
@@ -309,7 +220,7 @@ class PointNetDenseCls(nn.Module):
         x = F.log_softmax(x.view(-1,self.k), dim=-1)
         x = x.view(batchsize, n_pts, self.k)
         return x, trans, trans_feat
-        return x
+        return x #pth2onnx只能返回x
 
 def feature_transform_regularizer(trans):
     d = trans.size()[1]
@@ -326,24 +237,24 @@ def count_parameters(model):
 
 if __name__ == '__main__':
     sim_data = Variable(torch.rand(16,3,2048))
-    trans = STN3d()
-    out = trans(sim_data)
-    print('stn', out.size())
-    print('loss', feature_transform_regularizer(out))
+    # trans = STN3d()
+    # out = trans(sim_data)
+    # print('stn', out.size())
+    # print('loss', feature_transform_regularizer(out))
 
-    sim_data_64d = Variable(torch.rand(32, 64, 4096))
-    trans = STNkd(k=64)
-    out = trans(sim_data_64d)
-    print('stn64d', out.size())
-    print('loss', feature_transform_regularizer(out))
+    # sim_data_64d = Variable(torch.rand(32, 64, 4096))
+    # trans = STNkd(k=64)
+    # out = trans(sim_data_64d)
+    # print('stn64d', out.size())
+    # print('loss', feature_transform_regularizer(out))
 
-    pointfeat = PointNetfeat(global_feat=True)
-    out, _, _ = pointfeat(sim_data)
-    print('global feat', out.size())
+    # pointfeat = PointNetfeat(global_feat=True)
+    # out, _, _ = pointfeat(sim_data)
+    # print('global feat', out.size())
 
-    pointfeat = PointNetfeat(global_feat=False)
-    out, _, _ = pointfeat(sim_data)
-    print('point feat', out.size())
+    # pointfeat = PointNetfeat(global_feat=False)
+    # out, _, _ = pointfeat(sim_data)
+    # print('point feat', out.size())
 
     # cls = PointNetCls(k = 5)
     # out, _, _ = cls(sim_data)
@@ -354,7 +265,8 @@ if __name__ == '__main__':
     print('seg', out.size())
     
     print("Total parameters: ", count_parameters(seg))
+
     # 使用thop的profile函数计算FLOPs
     flops, params = profile(seg, inputs=(sim_data,))
-    # 打印FLOPs
     print("Total FLOPs: ", flops)
+    print("Total Params: ", params)
